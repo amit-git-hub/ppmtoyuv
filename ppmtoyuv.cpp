@@ -8,7 +8,6 @@ class ppmtoyuv
 private:
     uint32_t width;
     uint32_t height;
-    uint32_t depth;
 
     std::unique_ptr<uint8_t[]> yBuf;
     std::unique_ptr<uint8_t[]> cbBuf;
@@ -17,9 +16,39 @@ private:
 public:
     ppmtoyuv():
 	width(0),
-	height(0),
-	depth(0)
+	height(0)
     {}
+    ppmtoyuv(const ppmtoyuv &) = delete;
+    ppmtoyuv & operator=(const ppmtoyuv &) = delete;
+    ppmtoyuv(ppmtoyuv &&other)
+    {
+	if (this != &other)
+	{
+	    width = other.width;
+	    height = other.height;
+	    yBuf = std::move(other.yBuf);
+	    cbBuf = std::move(other.cbBuf);
+	    crBuf = std::move(other.crBuf);
+
+	    other.width = 0;
+	    other.height = 0;
+	}
+    }
+    ppmtoyuv& operator=(ppmtoyuv &&other)
+    {
+	if (this != &other)
+	{
+	    width = other.width;
+	    height = other.height;
+	    yBuf = std::move(other.yBuf);
+	    cbBuf = std::move(other.cbBuf);
+	    crBuf = std::move(other.crBuf);
+
+	    other.width = 0;
+	    other.height = 0;
+	}
+	return *this;
+    }
 
     bool writeYUV(std::string infname)
     {
@@ -27,6 +56,10 @@ public:
 	std::size_t pos = outfname.rfind("ppm");
 	if (pos != std::string::npos)
 	    outfname.replace(pos, 3, "yuv");
+	else {
+	    std::cout << "Input file not ppm.\n";
+	    return false;
+	}
 
 	std::ifstream fin(infname);
 	std::ofstream fout(outfname);
@@ -40,6 +73,7 @@ public:
 	{
 	    char newline, color;
 	    char dummy[2];
+	    uint32_t depth;
 
 	    if((dummy[0]=fin.get())!='P')
 	    {
